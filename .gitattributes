@@ -1,0 +1,7 @@
+* text=auto
+*.sh text eol=lf
+Containerfile text eol=lf
+*.py text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+*.txt text eol=lf

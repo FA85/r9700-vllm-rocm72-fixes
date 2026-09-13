@@ -1,0 +1,44 @@
+name: Build and publish image
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    # This large ROCm build intentionally runs on an adequately sized
+    # self-hosted Linux x86-64 runner. A GPU is not needed for the build.
+    runs-on: [self-hosted, Linux, X64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select image tag
+        shell: bash
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            version="$GITHUB_REF_NAME"
+          else
+            version="sha-${GITHUB_SHA::12}"
+          fi
+          echo "IMAGE=ghcr.io/${owner}/r9700-vllm-rocm72-fixes:${version}" >> "$GITHUB_ENV"
+
+      - name: Log in to GHCR
+        shell: bash
+        run: echo "$GITHUB_TOKEN" | podman login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and verify
+        shell: bash
+        run: CONTAINER_TOOL=podman IMAGE="$IMAGE" bash scripts/build.sh
+
+      - name: Publish
+        shell: bash
+        run: podman push "$IMAGE"
