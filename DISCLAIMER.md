@@ -17,7 +17,13 @@ Leerlauf. Der damit verbundene Stromverbrauch — und letztlich eine schlicht zu
 hohe, selbst zu bezahlende Stromrechnung — war der Anlass, die beiden ROCr-
 Backoffs zu diagnostizieren und umzusetzen. Das resultierende Dual-R9700-Setup
 läuft nach FA85s Beobachtung mit 50–70 tok/s. Diese Werte sind
-setupspezifische Beobachtungen und kein standardisierter Benchmark.
+setupspezifische Beobachtungen und kein standardisierter Benchmark. Spätere
+kontrollierte Replays ordneten dem Null-Event-Backoff bei längeren Antworten
+eine reproduzierbare Regression von Referenzwerten um 55–58 tok/s auf etwa
+41–44 tok/s zu. Der Zielkonflikt zwischen niedrigerer CPU-Last und Decode-
+Durchsatz ist in [KNOWN_PERFORMANCE_TRADEOFF.md](KNOWN_PERFORMANCE_TRADEOFF.md)
+dokumentiert; ein separates Ersatz-Image ohne diesen Backoff wird nicht
+angeboten.
 
 „Jedes Byte des eigenständigen Projektcodes“ bedeutet nicht, dass Codex oder
 FA85 Urheberschaft an vLLM, ROCm/ROCr, AITER, dem Basisimage oder anderem
@@ -45,7 +51,12 @@ unusually high idle CPU usage. The resulting power consumption — and,
 ultimately, an electricity bill that FA85 had to pay and that was simply too
 high — motivated the diagnosis and implementation of the two ROCr backoffs.
 FA85 observes 50–70 tok/s with the resulting dual-R9700 setup. These numbers
-are setup-specific observations, not a standardized benchmark.
+are setup-specific observations, not a standardized benchmark. Later
+controlled replays attributed a reproducible long-response regression from
+reference results around 55–58 tok/s to about 41–44 tok/s to the null-event
+backoff. The lower-CPU-versus-decode-throughput trade-off is documented in
+[KNOWN_PERFORMANCE_TRADEOFF.md](KNOWN_PERFORMANCE_TRADEOFF.md); no separate
+replacement image without that backoff is provided.
 
 “Every byte of original project code” does not claim authorship of vLLM,
 ROCm/ROCr, AITER, the base image, or any other third-party code. Parts of the

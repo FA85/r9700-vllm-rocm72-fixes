@@ -6,6 +6,12 @@ This procedure builds one local image containing the five published FP8 W8A8
 GEMM tuning files for `Qwen/Qwen3.8-27B-FP8` on two AMD Radeon AI PRO R9700
 cards, followed by the AITER LDS fix and both ROCr backoffs.
 
+> **Known trade-off:** On the documented setup, the null-event backoff lowered
+> CPU use in the problematic wait path but reproducibly reduced long-response
+> decode throughput from roughly 55–58 to 41–44 tok/s. The combined build still
+> contains this workaround, and no separate replacement image is provided. See
+> [KNOWN_PERFORMANCE_TRADEOFF.md](KNOWN_PERFORMANCE_TRADEOFF.md) for details.
+
 The order matters: build the tuning layer from the immutable upstream image
 first, then use that local image as the base for this repository's three
 general fixes.

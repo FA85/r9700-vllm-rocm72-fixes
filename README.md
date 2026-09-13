@@ -12,6 +12,12 @@
 > R9700 system. These are setup-specific observations, not a standardized
 > benchmark. See the full [authorship and motivation disclaimer](DISCLAIMER.md).
 
+> **Known trade-off:** The null-event backoff lowers CPU use in the problematic
+> wait path, but caused a reproducible long-response decode regression from
+> roughly 55–58 to 41–44 tok/s on the documented setup. This repository
+> intentionally provides no separate replacement image without that backoff.
+> See the [measurements and scope](KNOWN_PERFORMANCE_TRADEOFF.md).
+
 This repository builds an unofficial derivative of the official vLLM ROCm
 image for AMD Radeon AI PRO R9700 (`gfx1201`). It contains exactly three
 targeted changes:
@@ -26,7 +32,9 @@ targeted changes:
 3. **ROCr null-event backoff** — a narrowly scoped workaround for a blocked
    `InterruptSignal` without a KFD event. It polls the userspace signal with an
    exponential 20–200 microsecond sleep instead of repeatedly calling
-   `hsaKmtWaitOnEvent_Ext(nullptr, ...)` and receiving `INVALID_HANDLE`.
+   `hsaKmtWaitOnEvent_Ext(nullptr, ...)` and receiving `INVALID_HANDLE`. This
+   lowers the observed idle CPU load but carries a
+   [documented decode regression](KNOWN_PERFORMANCE_TRADEOFF.md).
 
 It deliberately contains no model-specific GEMM tuning, HIP `LD_PRELOAD`
 hook, hybrid/true-blocking wait experiment, debug symbol bundle, or
@@ -164,7 +172,9 @@ two-R9700 vLLM deployment. They fixed the observed AITER LDS failure and idle
 CPU spinning in that setup. This is still an unofficial compatibility image,
 not an AMD, ROCm, AITER, or vLLM release. In particular, the null-event backoff
 is a local workaround and should be reviewed upstream before being treated as a
-general ROCr fix.
+general ROCr fix. On this setup it also reduced long-response decode throughput
+by a reproducible roughly 20 to 29 percent. The trade-off is documented in
+[KNOWN_PERFORMANCE_TRADEOFF.md](KNOWN_PERFORMANCE_TRADEOFF.md).
 
 See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for source and licensing
 information.

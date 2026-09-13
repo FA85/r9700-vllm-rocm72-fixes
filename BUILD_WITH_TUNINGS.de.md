@@ -10,6 +10,13 @@ Diese Anleitung baut ein lokales Image mit:
 - dem ROCr-AsyncEventsLoop-Backoff;
 - dem ROCr-Null-Event-Backoff.
 
+> **Bekannter Zielkonflikt:** Der Null-Event-Backoff senkte auf dem
+> dokumentierten Setup die CPU-Last des problematischen Wait-Pfads, reduzierte
+> bei längeren Antworten aber den Decode-Durchsatz reproduzierbar von etwa
+> 55–58 auf 41–44 tok/s. Der kombinierte Build enthält diesen Workaround
+> weiterhin und es wird kein separates Ersatz-Image angeboten. Details stehen
+> in [KNOWN_PERFORMANCE_TRADEOFF.md](KNOWN_PERFORMANCE_TRADEOFF.md).
+
 Die Reihenfolge ist wichtig: Zuerst wird das Tuning auf das unveränderte,
 digestgebundene vLLM-Image gelegt. Danach werden die drei allgemeinen Fixes auf
 dieses lokale Tuning-Image gebaut.

@@ -10,6 +10,13 @@
 > [Urheberschafts- und Motivationshinweis](DISCLAIMER.md) erläutert die
 > Abgrenzung zu Upstream-Code.
 
+> **Bekannter Zielkonflikt:** Der Null-Event-Backoff senkt die CPU-Last des
+> problematischen Wait-Pfads, verursachte auf dem dokumentierten Setup aber
+> eine reproduzierbare Decode-Regression von etwa 55–58 auf 41–44 tok/s bei
+> längeren Antworten. Dieses Repository bietet bewusst kein separates
+> Ersatz-Image ohne den Backoff an. Siehe
+> [Messwerte und Einordnung](KNOWN_PERFORMANCE_TRADEOFF.md).
+
 Dieses Repository baut ein inoffizielles Derivat des offiziellen vLLM-ROCm-
 Images für die AMD Radeon AI PRO R9700 (`gfx1201`). Es enthält genau drei
 gezielte Änderungen:
@@ -22,6 +29,9 @@ gezielte Änderungen:
    `InterruptSignal`-Waits ohne KFD-Event. Statt
    `hsaKmtWaitOnEvent_Ext(nullptr, ...)` in einer engen Schleife aufzurufen,
    wird das Userspace-Signal mit 20 bis 200 Mikrosekunden Backoff abgefragt.
+   Dieser Workaround reduziert die beobachtete Leerlauf-CPU-Last, ist aber mit
+   einer [dokumentierten Decode-Regression](KNOWN_PERFORMANCE_TRADEOFF.md)
+   verbunden.
 
 Nicht enthalten sind modellspezifisches GEMM-Tuning, HIP-`LD_PRELOAD`-Hook,
 Hybrid-/True-Blocking-Experimente, Debug-Symbole oder eine `SYS_PTRACE`-
@@ -133,7 +143,10 @@ System mit zwei R9700 eingegrenzt und beseitigten dort den AITER-LDS-Fehler und
 das beobachtete CPU-Spinning im Leerlauf. Das Image bleibt ein inoffizieller
 Kompatibilitäts-Build. Insbesondere der Null-Event-Backoff ist ein lokal
 diagnostizierter Workaround und noch kein allgemein bestätigter ROCr-Upstream-
-Fix.
+Fix. Auf diesem Setup senkte er zugleich den Decode-Durchsatz längerer Antworten
+reproduzierbar um ungefähr 20 bis 29 Prozent. Diese Abwägung ist in
+[KNOWN_PERFORMANCE_TRADEOFF.md](KNOWN_PERFORMANCE_TRADEOFF.md) vollständig
+dokumentiert.
 
 Quellen und Lizenzhinweise stehen in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
