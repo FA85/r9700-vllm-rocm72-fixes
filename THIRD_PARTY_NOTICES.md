@@ -3,6 +3,8 @@
 The MIT license in this repository covers the original build, verification,
 and patch-application scripts. It does not replace the licenses of the base
 image or the source files and binaries modified or redistributed by the build.
+The authorship wording in [DISCLAIMER.md](DISCLAIMER.md) applies only to this
+original project code and makes no claim over the third-party works below.
 
 ## vLLM
 

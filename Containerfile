@@ -91,6 +91,8 @@ COPY --from=rocr-builder \
 COPY licenses/ /usr/share/doc/r9700-vllm-rocm72-fixes/licenses/
 COPY THIRD_PARTY_NOTICES.md \
   /usr/share/doc/r9700-vllm-rocm72-fixes/THIRD_PARTY_NOTICES.md
+COPY DISCLAIMER.md \
+  /usr/share/doc/r9700-vllm-rocm72-fixes/DISCLAIMER.md
 
 RUN set -eux; \
     cd /opt/rocm-7.2.3/lib; \

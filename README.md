@@ -2,6 +2,12 @@
 
 [Deutsche Anleitung](README.de.md)
 
+> Every byte of original project code in this repository was written by
+> OpenAI Codex at the direction of and in collaboration with FA85. The project
+> exists because the standard image's performance was unsatisfactory and its
+> idle CPU power use made the electricity bill simply too high. See the full
+> [authorship and motivation disclaimer](DISCLAIMER.md).
+
 This repository builds an unofficial derivative of the official vLLM ROCm
 image for AMD Radeon AI PRO R9700 (`gfx1201`). It contains exactly three
 targeted changes:
