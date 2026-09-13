@@ -2,11 +2,15 @@
 
 [Deutsche Anleitung](README.de.md)
 
-> Every byte of original project code in this repository was written by
-> OpenAI Codex at the direction of and in collaboration with FA85. The project
-> exists because the standard image's performance was unsatisfactory and its
-> idle CPU power use made the electricity bill simply too high. See the full
-> [authorship and motivation disclaimer](DISCLAIMER.md).
+> Disclaimer: Every byte of original project code in this repository was
+> written by various ChatGPT Codex models; I just navigated. It cost me several
+> weeks of investigating and testing. The project grew out of my unhappiness
+> with the standard image's performance (9.6 tok/s at 50% KV, leading to the
+> AITER LDS patch) and its power consumption when no work was being done
+> (leading to the ROCr AsyncEventsLoop and null-event backoffs — I have to pay
+> my power bill myself). The resulting setup runs at 50–70 tok/s on my dual
+> R9700 system. These are setup-specific observations, not a standardized
+> benchmark. See the full [authorship and motivation disclaimer](DISCLAIMER.md).
 
 This repository builds an unofficial derivative of the official vLLM ROCm
 image for AMD Radeon AI PRO R9700 (`gfx1201`). It contains exactly three

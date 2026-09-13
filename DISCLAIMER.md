@@ -3,17 +3,21 @@
 ## Deutsch
 
 Jedes Byte des eigenständigen Projektcodes in diesem Repository wurde von
-OpenAI Codex im Auftrag und in Zusammenarbeit mit FA85 geschrieben. Dazu
-gehören insbesondere das Containerfile, die Patch-Anwendungsskripte sowie die
-Build-, Prüf- und Startskripte.
+verschiedenen ChatGPT-Codex-Modellen im Auftrag und in Zusammenarbeit mit FA85
+geschrieben. FA85 navigierte, untersuchte und testete die Ergebnisse über
+mehrere Wochen. Zum Projektcode gehören insbesondere das Containerfile, die
+Patch-Anwendungsskripte sowie die Build-, Prüf- und Startskripte.
 
 Entstanden ist das Projekt aus zwei sehr praktischen Gründen: FA85 war mit der
-Performance des unveränderten vLLM-ROCm-Standardimages unzufrieden und wollte
-deshalb den AITER-Pfad auf der Radeon AI PRO R9700 zuverlässig nutzen. Daraus
-entstand der AITER-LDS-Backport. Anschließend zeigte sich eine ungewöhnlich
-hohe CPU-Last im Leerlauf. Der damit verbundene Stromverbrauch — und letztlich
-eine schlicht zu hohe Stromrechnung — war der Anlass, die beiden ROCr-Backoffs
-zu diagnostizieren und umzusetzen.
+Performance des unveränderten vLLM-ROCm-Standardimages unzufrieden: Beobachtet
+wurden etwa 9,6 tok/s bei 50 % KV-Auslastung. Der Wunsch, stattdessen den
+AITER-Pfad auf der Radeon AI PRO R9700 zuverlässig zu nutzen, führte zum
+AITER-LDS-Backport. Anschließend zeigte sich eine ungewöhnlich hohe CPU-Last im
+Leerlauf. Der damit verbundene Stromverbrauch — und letztlich eine schlicht zu
+hohe, selbst zu bezahlende Stromrechnung — war der Anlass, die beiden ROCr-
+Backoffs zu diagnostizieren und umzusetzen. Das resultierende Dual-R9700-Setup
+läuft nach FA85s Beobachtung mit 50–70 tok/s. Diese Werte sind
+setupspezifische Beobachtungen und kein standardisierter Benchmark.
 
 „Jedes Byte des eigenständigen Projektcodes“ bedeutet nicht, dass Codex oder
 FA85 Urheberschaft an vLLM, ROCm/ROCr, AITER, dem Basisimage oder anderem
@@ -27,18 +31,21 @@ AMD noch von vLLM, ROCm oder AITER unterstützt oder empfohlen.
 
 ## English
 
-Every byte of original project code in this repository was written by OpenAI
-Codex at the direction of and in collaboration with FA85. This includes the
-Containerfile, patch-application scripts, and the build, verification, and
-launcher scripts.
+Every byte of original project code in this repository was written by various
+ChatGPT Codex models at the direction of and in collaboration with FA85. FA85
+navigated, investigated, and tested the results over several weeks. The
+project code includes the Containerfile, patch-application scripts, and the
+build, verification, and launcher scripts.
 
 The project grew out of two practical concerns. FA85 was dissatisfied with the
-performance of the unmodified standard vLLM ROCm image and wanted to use the
-AITER path reliably on the Radeon AI PRO R9700; this led to the AITER LDS
-backport. The system then exhibited unusually high idle CPU usage. The
-resulting power consumption — and, ultimately, an electricity bill that was
-simply too high — motivated the diagnosis and implementation of the two ROCr
-backoffs.
+performance of the unmodified standard vLLM ROCm image, observing about 9.6
+tok/s at 50% KV utilization. The desire to use the AITER path reliably on the
+Radeon AI PRO R9700 led to the AITER LDS backport. The system then exhibited
+unusually high idle CPU usage. The resulting power consumption — and,
+ultimately, an electricity bill that FA85 had to pay and that was simply too
+high — motivated the diagnosis and implementation of the two ROCr backoffs.
+FA85 observes 50–70 tok/s with the resulting dual-R9700 setup. These numbers
+are setup-specific observations, not a standardized benchmark.
 
 “Every byte of original project code” does not claim authorship of vLLM,
 ROCm/ROCr, AITER, the base image, or any other third-party code. Parts of the
