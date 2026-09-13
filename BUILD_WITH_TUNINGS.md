@@ -18,10 +18,10 @@ After cloning this repository, run on the R9700 host:
 sudo bash scripts/build-with-tunings.sh
 ```
 
-The script automatically switches to the `vllm` account, fetches the published
-tuning branch into a temporary directory, verifies its five files, builds both
-image layers, and runs final static verification. To include the R9700 HIP
-smoke test, use:
+The script automatically switches to the `vllm` account, extracts the bundled
+and strictly setup-bound tuning archive into a temporary directory, verifies
+its five files, builds both image layers, and runs final static verification.
+To include the R9700 HIP smoke test, use:
 
 ```bash
 sudo env GPU_TEST=1 bash scripts/build-with-tunings.sh
@@ -30,11 +30,12 @@ sudo env GPU_TEST=1 bash scripts/build-with-tunings.sh
 The resulting image is
 `localhost/vllm-r9700:qwen38-v0.29.0-tuned-fixes`.
 
-While the tuning repository is not publicly readable, provide an SSH URL or an
-existing checkout:
+Alternatively, explicitly select the separate Git branch or an existing
+checkout:
 
 ```bash
-sudo env TUNING_REPO=git@github.com:FA85/r9700-vllm-tuning.git \
+sudo env TUNING_SOURCE=git \
+  TUNING_REPO=git@github.com:FA85/r9700-vllm-tuning.git \
   bash scripts/build-with-tunings.sh
 
 sudo env TUNING_DIR=/var/lib/vllm/r9700-vllm-tuning \
@@ -49,7 +50,8 @@ The sections below document the same process step by step.
 - enough storage for the vLLM base image and ROCr build
 - a `vllm` user with working rootless Podman
 - access to
-  [`FA85/r9700-vllm-tuning`](https://github.com/FA85/r9700-vllm-tuning)
+  [`FA85/r9700-vllm-tuning`](https://github.com/FA85/r9700-vllm-tuning) only
+  for the manual Git-based procedure documented below
 - two R9700 cards plus `/dev/kfd` and `/dev/dri` for runtime verification
 
 Use the same account for every Podman command. The commands below consistently

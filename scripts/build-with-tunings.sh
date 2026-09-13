@@ -9,6 +9,9 @@ esac
 ROOT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 
 BUILD_USER="${BUILD_USER:-vllm}"
+TUNING_SOURCE="${TUNING_SOURCE:-archive}"
+TUNING_ARCHIVE="${TUNING_ARCHIVE:-$ROOT_DIR/tunings/r9700-vllm-v029-qwen38-fp8-tp2.tar.gz}"
+TUNING_ARCHIVE_SHA256="${TUNING_ARCHIVE_SHA256:-7152bc3aad02e1b8f92f347038f06e9502af512d4d31bb3f2086b73f440d8f5c}"
 TUNING_REPO="${TUNING_REPO:-https://github.com/FA85/r9700-vllm-tuning.git}"
 TUNING_REF="${TUNING_REF:-codex/v0.29.0-tuning}"
 TUNING_DIR="${TUNING_DIR:-}"
@@ -25,6 +28,9 @@ Usage:
 Useful environment overrides:
   GPU_TEST=1             Include the R9700 HIP smoke test.
   BUILD_USER=vllm        Account owning the rootless Podman image store.
+  TUNING_SOURCE=archive  Use bundled archive (default) or git.
+  TUNING_ARCHIVE=PATH    Override the bundled tuning archive.
+  TUNING_ARCHIVE_SHA256  Expected SHA-256 for an overridden archive.
   TUNING_REPO=URL        Tuning Git repository (HTTPS or SSH).
   TUNING_REF=BRANCH      Tuning branch or tag.
   TUNING_DIR=PATH        Reuse a local tuning checkout instead of cloning.
@@ -55,6 +61,9 @@ if [[ "$EUID" -eq 0 ]]; then
   exec sudo -u "$BUILD_USER" -H env \
     XDG_RUNTIME_DIR="$runtime_dir" \
     BUILD_USER="$BUILD_USER" \
+    TUNING_SOURCE="$TUNING_SOURCE" \
+    TUNING_ARCHIVE="$TUNING_ARCHIVE" \
+    TUNING_ARCHIVE_SHA256="$TUNING_ARCHIVE_SHA256" \
     TUNING_REPO="$TUNING_REPO" \
     TUNING_REF="$TUNING_REF" \
     TUNING_DIR="$TUNING_DIR" \
@@ -66,7 +75,7 @@ if [[ "$EUID" -eq 0 ]]; then
     bash "$ROOT_DIR/scripts/build-with-tunings.sh" "$@"
 fi
 
-for command_name in git podman python3; do
+for command_name in podman python3; do
   command -v "$command_name" >/dev/null 2>&1 || {
     echo "$command_name not found" >&2
     exit 1
@@ -81,15 +90,47 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if [[ -z "$TUNING_DIR" ]]; then
+if [[ -n "$TUNING_DIR" ]]; then
+  TUNING_DIR="$(cd -- "$TUNING_DIR" && pwd -P)"
+  echo "Using local tuning checkout: $TUNING_DIR"
+elif [[ "$TUNING_SOURCE" == "archive" ]]; then
+  for command_name in tar sha256sum; do
+    command -v "$command_name" >/dev/null 2>&1 || {
+      echo "$command_name not found" >&2
+      exit 1
+    }
+  done
+  temporary_root="$(mktemp -d)"
+  TUNING_DIR="$temporary_root/archive"
+  mkdir -p "$TUNING_DIR"
+  [[ -f "$TUNING_ARCHIVE" ]] || {
+    echo "Tuning archive not found: $TUNING_ARCHIVE" >&2
+    exit 1
+  }
+  echo "Using bundled tuning archive: $TUNING_ARCHIVE"
+  actual_archive_sha256="$(sha256sum "$TUNING_ARCHIVE" | awk '{print $1}')"
+  [[ "$actual_archive_sha256" == "$TUNING_ARCHIVE_SHA256" ]] || {
+    echo "Tuning archive SHA-256 mismatch" >&2
+    echo "Expected: $TUNING_ARCHIVE_SHA256" >&2
+    echo "Actual:   $actual_archive_sha256" >&2
+    exit 1
+  }
+  echo "PASS: tuning archive SHA-256"
+  tar -xzf "$TUNING_ARCHIVE" -C "$TUNING_DIR"
+  cat "$TUNING_DIR/tunings/SETUP_SCOPE.md"
+elif [[ "$TUNING_SOURCE" == "git" ]]; then
+  command -v git >/dev/null 2>&1 || {
+    echo "git not found" >&2
+    exit 1
+  }
   temporary_root="$(mktemp -d)"
   TUNING_DIR="$temporary_root/r9700-vllm-tuning"
   echo "Fetching tuning set $TUNING_REF from $TUNING_REPO"
   GIT_TERMINAL_PROMPT=0 git clone --depth 1 --branch "$TUNING_REF" \
     "$TUNING_REPO" "$TUNING_DIR"
 else
-  TUNING_DIR="$(cd -- "$TUNING_DIR" && pwd -P)"
-  echo "Using local tuning checkout: $TUNING_DIR"
+  echo "TUNING_SOURCE must be 'archive' or 'git': $TUNING_SOURCE" >&2
+  exit 2
 fi
 
 tuning_root="$TUNING_DIR/r9700-tuning"

@@ -5,3 +5,4 @@ Containerfile text eol=lf
 *.yml text eol=lf
 *.md text eol=lf
 *.txt text eol=lf
+*.gz binary

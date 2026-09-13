@@ -1,5 +1,6 @@
 *.log
 *.tar
 *.tar.gz
+!tunings/r9700-vllm-v029-qwen38-fp8-tp2.tar.gz
 __pycache__/
 *.pyc

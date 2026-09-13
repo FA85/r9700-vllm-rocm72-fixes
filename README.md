@@ -36,7 +36,8 @@ The model-specific tuning remains in the separate
 [`r9700-vllm-tuning`](https://github.com/FA85/r9700-vllm-tuning) repository.
 To build one local image containing both that v0.29.0 tuning and these three
 fixes, follow [Build with v0.29.0 tuning](BUILD_WITH_TUNINGS.md). The short path
-after cloning this repository is:
+after cloning this repository uses the bundled,
+[strictly setup-bound archive](tunings/SETUP_SCOPE.md):
 
 ```bash
 sudo bash scripts/build-with-tunings.sh
