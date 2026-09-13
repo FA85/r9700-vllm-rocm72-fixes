@@ -2,6 +2,13 @@
 
 [Deutsche Anleitung](README.de.md)
 
+Disclaimer: Every byte of code is written by various ChatGPT Codex models.
+I just navigated. It cost me some weeks of investigating and testing. It
+developed out of my unhappiness about the performance (9,6 tok/s at 50%
+KV - AITER LDS patch) and the power consumption when no work is done
+(ROCr-AsyncEventsLoop-Backoff and ROCr-Null-Event-Backoff - I have to pay
+my power bill myself). Running fine on my dual R9700 setup at 50-70 tok/s. 
+
 This repository builds an unofficial derivative of the official vLLM ROCm
 image for AMD Radeon AI PRO R9700 (`gfx1201`). It contains exactly three
 targeted changes:
