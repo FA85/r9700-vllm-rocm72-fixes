@@ -17,7 +17,11 @@ command -v "$CONTAINER_TOOL" >/dev/null 2>&1 || {
   exit 1
 }
 
-"$CONTAINER_TOOL" pull "$BASE_IMAGE"
+if "$CONTAINER_TOOL" image inspect "$BASE_IMAGE" >/dev/null 2>&1; then
+  echo "Using local base image: $BASE_IMAGE"
+else
+  "$CONTAINER_TOOL" pull "$BASE_IMAGE"
+fi
 "$CONTAINER_TOOL" build \
   --pull=false \
   --build-arg "BASE_IMAGE=$BASE_IMAGE" \

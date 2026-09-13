@@ -27,6 +27,36 @@ Nicht enthalten sind modellspezifisches GEMM-Tuning, HIP-`LD_PRELOAD`-Hook,
 Hybrid-/True-Blocking-Experimente, Debug-Symbole oder eine `SYS_PTRACE`-
 Anforderung.
 
+Das modellspezifische Tuning bleibt im separaten Repository
+[`r9700-vllm-tuning`](https://github.com/FA85/r9700-vllm-tuning). Wie daraus
+zusammen mit diesen drei Fixes ein einziges lokales Image gebaut wird, steht in
+der [Bauanleitung mit v0.29.0-Tuning](BUILD_WITH_TUNINGS.de.md). Der Kurzweg
+nach dem Klonen dieses Repositorys ist:
+
+```bash
+sudo bash scripts/build-with-tunings.sh
+```
+
+## Hinweise, die zur Diagnose führten
+
+Die Lösung entstand nicht im luftleeren Raum. Der
+[AITER-LDS-PR #5035](https://github.com/ROCm/aiter/pull/5035) lokalisierte den
+gfx1201-Startfehler auf eine 3D-Unified-Attention-Konfiguration oberhalb des
+64-KiB-LDS-Limits und lieferte die Grundlage für den hier auf `amd-aiter
+0.1.19` zurückportierten Guard.
+
+Beim Leerlaufproblem wies der bereits unabhängig veröffentlichte
+[ROCm-Systems-Issue #7860](https://github.com/ROCm/rocm-systems/issues/7860)
+auf dieselbe heiße Stelle in HSA/ROCr hin: `Runtime::AsyncEventsLoop`. Das war
+ein wichtiger Wegweiser für unsere Profiler- und Debuggeranalyse. Der
+AsyncEventsLoop-Patch selbst folgt dem später zusammengeführten
+[ROCm-Systems-PR #7898](https://github.com/ROCm/rocm-systems/pull/7898).
+Issue #7860 beschreibt jedoch einen anderen Auslöser; er belegt deshalb nicht,
+dass dessen konkrete Ursache mit unserem vLLM-Fall identisch war. Der
+zusätzliche Null-Event-Pfad wurde in unserem Setup separat bis
+`InterruptSignal::WaitRelaxed` und einem ungültigen KFD-Event-Handle
+zurückverfolgt und bleibt ein lokaler Workaround.
+
 ## Gültiger Versionsbereich
 
 Der Build ist fest auf folgende Kombination begrenzt:

@@ -38,6 +38,9 @@ subject to AITER's license.
 - AsyncEventsLoop upstream fix:
   <https://github.com/ROCm/rocm-systems/pull/7898>
 - Upstream fix commit: `46558b7af4dc79b8b8014619c1afdb82db079a9f`
+- Earlier independent localization of an HSA async-handler busy-spin to
+  `Runtime::AsyncEventsLoop` (different trigger, diagnostic lead only):
+  <https://github.com/ROCm/rocm-systems/issues/7860>
 - License: University of Illinois/NCSA; reproduced in
   `licenses/ROCR-NCSA.txt`
 

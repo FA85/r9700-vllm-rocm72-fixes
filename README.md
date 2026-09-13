@@ -32,6 +32,35 @@ It deliberately contains no model-specific GEMM tuning, HIP `LD_PRELOAD`
 hook, hybrid/true-blocking wait experiment, debug symbol bundle, or
 `SYS_PTRACE` requirement.
 
+The model-specific tuning remains in the separate
+[`r9700-vllm-tuning`](https://github.com/FA85/r9700-vllm-tuning) repository.
+To build one local image containing both that v0.29.0 tuning and these three
+fixes, follow [Build with v0.29.0 tuning](BUILD_WITH_TUNINGS.md). The short path
+after cloning this repository is:
+
+```bash
+sudo bash scripts/build-with-tunings.sh
+```
+
+## Diagnostic leads and prior work
+
+This solution did not emerge in isolation. The
+[AITER LDS PR #5035](https://github.com/ROCm/aiter/pull/5035) localized the
+gfx1201 startup failure to a 3D unified-attention configuration above the
+64 KiB LDS limit and provided the basis for the guard backported here to
+`amd-aiter 0.1.19`.
+
+For the idle-load problem, the independently published
+[ROCm Systems issue #7860](https://github.com/ROCm/rocm-systems/issues/7860)
+had already identified the same hot HSA/ROCr location,
+`Runtime::AsyncEventsLoop`. That was an important lead for our profiler and
+debugger work. The AsyncEventsLoop patch itself follows the subsequently
+merged [ROCm Systems PR #7898](https://github.com/ROCm/rocm-systems/pull/7898).
+Issue #7860 has a different trigger, so it is not evidence that its exact root
+cause was the same as in our vLLM case. The additional null-event path was
+separately traced in our setup to `InterruptSignal::WaitRelaxed` and an invalid
+KFD event handle, and remains a local workaround.
+
 ## Version scope
 
 The build is intentionally pinned and fails closed when its assumptions do not
