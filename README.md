@@ -22,6 +22,8 @@
 > 0.30.0. The working v0.29.0 production stack is not being replaced by a
 > release that neither removes all local ROCr workarounds nor demonstrates a
 > reproducible benefit for this exact dual-R9700, dense-Qwen3.8 FP8 setup.
+> The latest release published from this repository has run continuously,
+> stably, and without observed faults on the author's system since publication.
 > There is no stable v0.31.x release yet. Several post-v0.30 changes are worth
 > watching, including the upstream AITER RDNA LDS guard and proposed native
 > gfx1201 FP8, long-context decode, and TP all-reduce kernels. See the

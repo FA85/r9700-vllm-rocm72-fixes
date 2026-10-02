@@ -21,8 +21,10 @@
 > 0.30.0 bewusst. Der stabil laufende v0.29.0-Produktionsstand wird nicht durch
 > ein Release ersetzt, das weder alle lokalen ROCr-Workarounds überflüssig
 > macht noch einen reproduzierbaren Vorteil für genau dieses Dual-R9700-Setup
-> mit dichtem Qwen3.8-FP8-Modell belegt. Ein stabiles v0.31.x gibt es noch
-> nicht. Beobachtet werden aber der inzwischen upstream enthaltene
+> mit dichtem Qwen3.8-FP8-Modell belegt. Das zuletzt aus diesem Repository
+> veröffentlichte Release läuft beim Autor seit seiner Veröffentlichung
+> durchgehend stabil und ohne beobachtete Fehler. Ein stabiles v0.31.x gibt es
+> noch nicht. Beobachtet werden aber der inzwischen upstream enthaltene
 > AITER-RDNA-LDS-Guard sowie vorgeschlagene native gfx1201-Kernel für FP8,
 > Long-Context-Decode und TP-All-Reduce. Siehe
 > [Entscheidung zu v0.30 und Beobachtungsliste für v0.31.x](UPGRADE_WATCH.de.md).

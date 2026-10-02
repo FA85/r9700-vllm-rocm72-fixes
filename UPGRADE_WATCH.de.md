@@ -16,10 +16,14 @@ Empfehlung für alle ROCm-Nutzer. Das Referenzsystem besteht aus:
 
 ## Warum dieses Projekt v0.30.0 überspringt
 
-Das bestehende v0.29.0-Image läuft im Produktivbetrieb stabil. v0.30.0 ändert
-den ROCm-Softwarestack erheblich, unter anderem TheRock-Basis, PyTorch, Triton
-und AITER. Für genau dieses Setup gibt es aber nicht genug belastbare Belege,
-die den Austausch des bekannten funktionierenden Stands rechtfertigen.
+Das bestehende v0.29.0-Image läuft im Produktivbetrieb stabil. Das zuletzt aus
+diesem Repository veröffentlichte Release läuft beim Autor seit seiner
+Veröffentlichung durchgehend stabil und ohne beobachtete Fehler. Das ist ein
+Erfahrungsbericht über genau diesen Einsatz und keine allgemeine
+Stabilitätsgarantie. v0.30.0 ändert den ROCm-Softwarestack erheblich, unter
+anderem TheRock-Basis, PyTorch, Triton und AITER. Für genau dieses Setup gibt es
+aber nicht genug belastbare Belege, die den Austausch des bekannten
+funktionierenden Stands rechtfertigen.
 
 Insbesondere gilt:
 

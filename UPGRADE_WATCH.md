@@ -16,10 +16,13 @@ ROCm users. The reference setup is:
 
 ## Why this project skips v0.30.0
 
-The existing v0.29.0 image has been stable in production. v0.30.0 changes the
-ROCm software stack substantially, including its TheRock base, PyTorch,
-Triton, and AITER versions, but does not provide enough setup-specific evidence
-to justify replacing that known-good deployment.
+The existing v0.29.0 image has been stable in production. The latest release
+published from this repository has run continuously, stably, and without
+observed faults on the author's system since publication. This is a report
+about that specific deployment, not a general stability guarantee. v0.30.0
+changes the ROCm software stack substantially, including its TheRock base,
+PyTorch, Triton, and AITER versions, but does not provide enough setup-specific
+evidence to justify replacing that known-good deployment.
 
 In particular:
 
