@@ -18,16 +18,18 @@
 > intentionally provides no separate replacement image without that backoff.
 > See the [measurements and scope](KNOWN_PERFORMANCE_TRADEOFF.md).
 
-> **Upgrade policy (2026-10-02):** This project deliberately skips vLLM
-> 0.30.0. The working v0.29.0 production stack is not being replaced by a
-> release that neither removes all local ROCr workarounds nor demonstrates a
-> reproducible benefit for this exact dual-R9700, dense-Qwen3.8 FP8 setup.
+> **Upgrade policy (2026-10-12):** This project deliberately skips vLLM
+> 0.30.0 and 0.31.0 and is waiting for v0.32.0 as the next evaluation point.
+> The working v0.29.0 production stack is not being replaced by a release that
+> neither removes all local ROCr workarounds nor demonstrates a reproducible
+> benefit for this exact dual-R9700, dense-Qwen3.8 FP8 setup.
 > The latest release published from this repository has run continuously,
 > stably, and without observed faults on the author's system since publication.
-> There is no stable v0.31.x release yet. Several post-v0.30 changes are worth
-> watching, including the upstream AITER RDNA LDS guard and proposed native
-> gfx1201 FP8, long-context decode, and TP all-reduce kernels. See the
-> [v0.30 skip decision and v0.31.x watchlist](UPGRADE_WATCH.md).
+> Current nightlies contain relevant GDN/MTP correctness fixes and an opt-in
+> RDNA4 segmented-attention backend, but the most crash-relevant accepted-token
+> bounds and stale-row fixes are still open. v0.32.0 is therefore a checkpoint
+> for isolated testing, not a promised upgrade. See the
+> [v0.30/v0.31 skip decision and v0.32 watchlist](UPGRADE_WATCH.md).
 
 This repository builds an unofficial derivative of the official vLLM ROCm
 image for AMD Radeon AI PRO R9700 (`gfx1201`). It contains exactly three

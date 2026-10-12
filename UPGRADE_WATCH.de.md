@@ -1,8 +1,8 @@
-# vLLM-Upgrade-Beobachtung: v0.30.0 überspringen, v0.31.x beobachten
+# vLLM-Upgrade-Beobachtung: v0.30.0/v0.31.0 überspringen, auf v0.32.0 warten
 
 [English version](UPGRADE_WATCH.md)
 
-Stand: 02.10.2026.
+Stand: 12.10.2026.
 
 Diese Notiz hält eine Projektentscheidung fest und ist keine allgemeine
 Empfehlung für alle ROCm-Nutzer. Das Referenzsystem besteht aus:
@@ -13,6 +13,62 @@ Empfehlung für alle ROCm-Nutzer. Das Referenzsystem besteht aus:
 - AITER Unified Attention, fünf lokal gemessenen GEMM-Tuningdateien und MTP
   mit zwei spekulativen Tokens;
 - den drei in diesem Repository dokumentierten lokalen Fixes.
+
+## Aktuelle Entscheidung: auf v0.32.0 warten
+
+v0.31.0 ist inzwischen stabil veröffentlicht. Dieses Projekt stellt sein
+Produktivimage trotzdem nicht darauf um. Der nächste Prüfpunkt ist v0.32.0.
+Das ist keine Upgrade-Zusage: Auch v0.32.0 muss die setupspezifische Schranke
+weiter unten in einem isolierten Image bestehen.
+
+Für das Warten gibt es inzwischen konkretere Gründe als bloße
+Versionsvorsicht:
+
+- [vLLM #56531](https://github.com/vllm-project/vllm/pull/56531), nach dem
+  v0.31.0-Release-Cut zusammengeführt, hält spekulationsfähige hybride
+  Recurrent-Zeilen auch in Schritten ohne Drafts auf einem konsistenten
+  Zustandspfad.
+- [vLLM #55504](https://github.com/vllm-project/vllm/pull/55504), am
+  10.10.2026 zusammengeführt, verhindert, dass überbreite GDN-Decode-Zeilen in
+  ein begrenztes spekulatives State-Layout gelangen. Beide Änderungen sind
+  direkt für hybride GDN-Modelle mit spekulativem Decoding relevant.
+- [vLLM #55601](https://github.com/vllm-project/vllm/pull/55601) und
+  [vLLM #60533](https://github.com/vllm-project/vllm/pull/60533) korrigieren
+  State-Indizierung und Checkpoint-Grenzen des Prefix Cache bei hybriden
+  Mamba-/GDN-Modellen. Die veröffentlichten Auslöser enthalten
+  DFlash2-/EAGLE-Layouts; die Übertragbarkeit auf unsere exakte
+  MTP-Konfiguration muss deshalb noch gezeigt werden.
+- [vLLM #59132](https://github.com/vllm-project/vllm/pull/59132) ergänzt das
+  optionale RDNA3-/RDNA4-Backend `ROCM_SEGMENTED_ATTN` und enthält einen
+  direkten Vergleich mit zwei R9700, TP=2 und `Qwen/Qwen3.8-27B-FP8`. Damit
+  ist es ein ernsthafter Laborkandidat, aber noch kein Beleg für einen Vorteil
+  gegenüber unserem getunten Produktionsstack mit identischen Requests und
+  Cache-Einstellungen.
+- [vLLM #57560](https://github.com/vllm-project/vllm/pull/57560) ergänzt einen
+  optionalen AITER-FlyDSL-Pfad für GDN-Prefill. Validiert wurde er auf MI355X
+  mit einem wesentlich größeren Qwen3.8-Modell, nicht auf `gfx1201` mit diesem
+  dichten 27B-Checkpoint.
+
+Nach dem beobachteten `hipErrorIllegalAddress` im ROCm-GDN-Pfad sind zwei noch
+offene Pull Requests besonders wichtig:
+
+- [vLLM #51508](https://github.com/vllm-project/vllm/pull/51508) beschreibt
+  bei Async Scheduling eine Stale-Row-Situation, in der ein Accepted Count von
+  null zum Index `-1` wird. Abhängig vom Speicherlayout kann das den Zustand
+  unbemerkt beschädigen oder einen Illegal Memory Access auslösen.
+- [vLLM #50021](https://github.com/vllm-project/vllm/pull/50021) begrenzt die
+  aus Accepted Tokens abgeleiteten GDN-/KDA-State-Indizes nach unten und oben.
+  Der PR grenzt dieses Bounds-Problem ausdrücklich vom weiterhin separaten
+  Ordering-Race bei Async Scheduling außerhalb des `align`-Modus ab.
+
+Solange diese beiden crashnahen Änderungen nicht zusammengeführt sind, ist ein
+aktuelles Nightly für Reproduktionen im Labor interessant, aber noch kein
+sauberer Produktionsnachfolger. Auch das optionale native RDNA3-/RDNA4-
+All-Reduce ([vLLM #57767](https://github.com/vllm-project/vllm/pull/57767))
+und der Fix, der den AITER-Unified-Attention-Schalter auf RDNA tatsächlich
+wirksam macht
+([vLLM #56040](https://github.com/vllm-project/vllm/pull/56040)), sind noch
+offen.
 
 ## Warum dieses Projekt v0.30.0 überspringt
 
@@ -43,11 +99,12 @@ Die Entscheidung lautet deshalb **überspringen**, nicht „v0.30.0 ist defekt�
 Für andere Hardware und Lastprofile kann das Release sinnvoll sein; es erfüllt
 nur die Upgrade-Schwelle dieses Projekts nicht.
 
-## Was v0.31.x für uns interessant machen könnte
+## Was v0.31.x ursprünglich für uns interessant machte
 
-Zum Zeitpunkt dieser Notiz gab es noch kein stabiles v0.31.x. Die folgenden
-Punkte sind Änderungen nach v0.30 auf `main` oder offene Pull Requests. Ein
-offener Pull Request ist keine Zusage, dass die Änderung in v0.31.x erscheint.
+Die folgenden Punkte waren die ursprüngliche Beobachtungsliste nach v0.30. Sie
+bleiben als historischer Kontext nützlich; die aktuelle Entscheidung und der
+Nightly-Stand nach v0.31 stehen oben. Ein offener Pull Request ist keine
+Zusage, dass die Änderung in v0.32.0 erscheint.
 
 ### Bereits auf vLLM main
 
@@ -116,7 +173,7 @@ gültiger Benchmark noch eine gültige Migration.
 
 ## Upgrade-Schranke
 
-Ein zukünftiges stabiles v0.31.x sollte isoliert getestet und nicht über das
+Ein zukünftiges stabiles v0.32.0 sollte isoliert getestet und nicht über das
 funktionierende Image installiert werden. Ein Upgrade wird erst dann
 vorbereitenswert, wenn das Release materiell relevante Änderungen wie die oben
 genannten enthält und auf dem exakten Produktivhost alle folgenden Prüfungen
@@ -133,5 +190,5 @@ besteht:
 - neue Messung von GEMM-Backend-Auswahl und Tunings.
 
 Bis dahin lautet die Empfehlung dieses Repositorys: v0.29.0 im
-Produktivbetrieb beibehalten und ein v0.31.x-Entwicklungsimage nur separat im
+Produktivbetrieb beibehalten und ein v0.32-Entwicklungsimage nur separat im
 Labor testen.

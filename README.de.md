@@ -17,17 +17,20 @@
 > Ersatz-Image ohne den Backoff an. Siehe
 > [Messwerte und Einordnung](KNOWN_PERFORMANCE_TRADEOFF.md).
 
-> **Upgrade-Entscheidung (02.10.2026):** Dieses Projekt überspringt vLLM
-> 0.30.0 bewusst. Der stabil laufende v0.29.0-Produktionsstand wird nicht durch
-> ein Release ersetzt, das weder alle lokalen ROCr-Workarounds überflüssig
-> macht noch einen reproduzierbaren Vorteil für genau dieses Dual-R9700-Setup
-> mit dichtem Qwen3.8-FP8-Modell belegt. Das zuletzt aus diesem Repository
+> **Upgrade-Entscheidung (12.10.2026):** Dieses Projekt überspringt vLLM
+> 0.30.0 und 0.31.0 bewusst und wartet mit der nächsten Bewertung auf v0.32.0.
+> Der stabil laufende v0.29.0-Produktionsstand wird nicht durch ein Release
+> ersetzt, das weder alle lokalen ROCr-Workarounds überflüssig macht noch einen
+> reproduzierbaren Vorteil für genau dieses Dual-R9700-Setup mit dichtem
+> Qwen3.8-FP8-Modell belegt. Das zuletzt aus diesem Repository
 > veröffentlichte Release läuft beim Autor seit seiner Veröffentlichung
-> durchgehend stabil und ohne beobachtete Fehler. Ein stabiles v0.31.x gibt es
-> noch nicht. Beobachtet werden aber der inzwischen upstream enthaltene
-> AITER-RDNA-LDS-Guard sowie vorgeschlagene native gfx1201-Kernel für FP8,
-> Long-Context-Decode und TP-All-Reduce. Siehe
-> [Entscheidung zu v0.30 und Beobachtungsliste für v0.31.x](UPGRADE_WATCH.de.md).
+> durchgehend stabil und ohne beobachtete Fehler. Aktuelle Nightlies enthalten
+> relevante GDN-/MTP-Korrektheitsfixes und ein optionales segmentiertes
+> RDNA4-Attention-Backend. Die für unseren Crash besonders relevanten Grenzen
+> für Accepted-Token-Indizes und Stale-Row-Fixes sind aber weiterhin offen.
+> v0.32.0 ist deshalb ein Prüfpunkt für isolierte Tests und keine automatische
+> Upgrade-Zusage. Siehe
+> [Entscheidung zu v0.30/v0.31 und Beobachtungsliste für v0.32](UPGRADE_WATCH.de.md).
 
 Dieses Repository baut ein inoffizielles Derivat des offiziellen vLLM-ROCm-
 Images für die AMD Radeon AI PRO R9700 (`gfx1201`). Es enthält genau drei
