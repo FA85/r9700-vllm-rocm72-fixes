@@ -26,14 +26,55 @@
 > The latest release published from this repository has run continuously,
 > stably, and without observed faults on the author's system since publication.
 > Current nightlies contain relevant GDN/MTP correctness fixes and an opt-in
-> RDNA4 segmented-attention backend, but their relevance and stability for the
-> exact production setup have not yet been validated in practice. v0.32.0 is
-> therefore a checkpoint for isolated testing, not a promised upgrade.
+> RDNA4 segmented-attention backend. A first isolated dual-R9700 test now shows
+> that the stock nightly starts successfully and that segmented attention is a
+> measurable performance candidate, but this is not yet a production-stability
+> validation. v0.32.0 therefore remains a checkpoint for isolated testing, not
+> a promised upgrade.
 > **Update from 2026-10-16:** A preliminary source review
 > suggests that all three existing patches may initially be omitted; only the
 > still-open `rocprofiler-sdk` signal-pool fix remains a conditional candidate
 > if the stock v0.32 image actually reproduces KFD event exhaustion. See the
 > [v0.30/v0.31 skip decision and v0.32 watchlist](UPGRADE_WATCH.md).
+
+## Preliminary stock-nightly result (2026-10-16)
+
+The unmodified official image
+`vllm/vllm-openai-rocm:nightly-49cb2bbf71cfd36ee5aa33d1e184b1cddff55294`
+starts and serves `Qwen/Qwen3.8-27B-FP8` on two R9700 GPUs with TP=2, MTP=2,
+a 131,072-token model limit, and the previous 5,000,000,000-byte KV-cache
+allocation. No local patch or published GEMM tuning file was present in these
+runs.
+
+A 25-request local comparison produced the following medians. Decode and
+aggregate throughput are tokens/s; TTFT is seconds.
+
+| Case | Metric | AITER unified | Segmented static | Segmented tuned |
+| --- | --- | ---: | ---: | ---: |
+| Single decode | Decode | 48.57 | 50.04 | 50.07 |
+| Single decode | TTFT | 0.078 | 0.122 | 0.130 |
+| Long context, cold | Decode | 50.16 | 52.24 | 52.28 |
+| Long context, cold | TTFT | 8.485 | 12.458 | 12.755 |
+| Long context, warm | Decode | 50.21 | 52.21 | 52.35 |
+| Long context, warm | TTFT | 0.673 | 0.345 | 0.336 |
+| Concurrent requests | Aggregate | 110.93 | 149.78 | 152.64 |
+| Concurrent requests | TTFT | 2.673 | 1.393 | 1.332 |
+
+Relative to AITER unified, tuned `ROCM_SEGMENTED_ATTN` delivered about 3.1%
+more single-request decode throughput, 4.2-4.3% more long-context decode
+throughput, and 37.6% more aggregate concurrent throughput. Its cold
+long-context and single-request TTFT were worse, while warm long-context and
+concurrent TTFT improved. Autotuning added only 0.1-1.9% over static segmented
+attention in this run, apart from small TTFT movement.
+
+These results are preliminary, not a release qualification. Output hashes
+differed for all 25 AITER-versus-tuned responses; kernel-dependent rounding
+can change sampled output, but the contents still require review before any
+correctness claim. The stock nightly also returned to roughly 200% idle CPU
+use after initialization. That confirms the idle-load symptom remains in this
+configuration, but does not by itself establish KFD-event exhaustion or its
+root cause. DFlash2 was not part of these measurements and is being evaluated
+separately.
 
 This repository builds an unofficial derivative of the official vLLM ROCm
 image for AMD Radeon AI PRO R9700 (`gfx1201`). It contains exactly three
