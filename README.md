@@ -28,7 +28,10 @@
 > Current nightlies contain relevant GDN/MTP correctness fixes and an opt-in
 > RDNA4 segmented-attention backend, but the most crash-relevant accepted-token
 > bounds and stale-row fixes are still open. v0.32.0 is therefore a checkpoint
-> for isolated testing, not a promised upgrade. See the
+> for isolated testing, not a promised upgrade. A preliminary source review
+> suggests that all three existing patches may initially be omitted; only the
+> still-open `rocprofiler-sdk` signal-pool fix remains a conditional candidate
+> if the stock v0.32 image actually reproduces KFD event exhaustion. See the
 > [v0.30/v0.31 skip decision and v0.32 watchlist](UPGRADE_WATCH.md).
 
 This repository builds an unofficial derivative of the official vLLM ROCm

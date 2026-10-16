@@ -147,18 +147,54 @@ Zusage, dass die Änderung in v0.32.0 erscheint.
 Diese Kandidaten sind für uns interessanter als die Versionsnummer v0.30.0,
 weil sie die tatsächliche Hardware und die Engpässe dieses Repositorys treffen.
 
-## Stand der drei lokalen Fixes
+## Vorläufiger Patchplan für v0.32.0 (Stand 16.10.2026)
 
-| Lokale Änderung | Upstream-Stand | Folge für ein Upgrade |
+Diese Bewertung bezieht sich auf den derzeitigen
+[`releases/v0.32.0`-Branch](https://github.com/vllm-project/vllm/tree/releases/v0.32.0),
+nicht auf ein bereits auf diesem System validiertes finales Release-Image. Der
+erste Test wird deshalb absichtlich mit dem **unveränderten offiziellen Image**
+durchgeführt: ohne die drei lokalen Patches und zunächst auch ohne die fünf
+lokalen GEMM-Tuningdateien. Nur ein auf diesem Aufbau reproduziertes Problem
+rechtfertigt einen neuen Patch.
+
+| Bisherige lokale Änderung | Stand im aktuellen v0.32-Branch | Geplantes Vorgehen |
 | --- | --- | --- |
-| AITER-LDS-Guard | Ein breiterer Fix ist mit [ROCm/aiter #4868](https://github.com/ROCm/aiter/pull/4868) in AITER 0.1.23 enthalten. | Nach direkter Validierung ein Kandidat zum Entfernen. |
-| ROCr-AsyncEventsLoop-Backoff | [ROCm/rocm-systems #7898](https://github.com/ROCm/rocm-systems/pull/7898) wurde upstream zusammengeführt. | Vor dem Entfernen des Backports prüfen, ob die exakte ROCr-Quelle des Release-Images den Fix enthält. |
-| ROCr-Null-Event-Backoff | Ein gleichwertiger Upstream-Fix ist nicht bekannt. [ROCm/rocm-systems #11170](https://github.com/ROCm/rocm-systems/pull/11170) betrifft `BusyWaitSignal`, nicht unseren Event-Erschöpfungs-/`InterruptSignal`-Pfad. | Bleibt ein lokaler Workaround mit dem dokumentierten Decode-Zielkonflikt. |
+| AITER-LDS-Guard | Der Branch baut [AITER 0.1.24.post1](https://github.com/vllm-project/vllm/blob/releases/v0.32.0/docker/Dockerfile.rocm_base); der allgemeinere RDNA-LDS-Guard aus [ROCm/aiter #4868](https://github.com/ROCm/aiter/pull/4868) ist darin enthalten. | Den lokalen Backport zunächst weglassen und Kaltstart sowie Unified Attention direkt auf `gfx1201` prüfen. |
+| ROCr-AsyncEventsLoop-Backoff | Der aktuell gepinnte ROCr-Quellstand enthält den lokalen 20–200-µs-Backoff nicht. Außerdem entfernt [ROCm/rocm-systems #13149](https://github.com/ROCm/rocm-systems/pull/13149) diesen Backoff auf interruptfähigem nativen Linux wieder, weil er in gemischten Signal-Batches Latenz erzeugt. | Nicht übernehmen. |
+| ROCr-Null-Event-Backoff | Der Backoff behandelt das Polling-Symptom und besitzt den dokumentierten Decode-Zielkonflikt. Die inzwischen lokalisierte wahrscheinliche Ursache ist die Erschöpfung aller KFD-Events durch den Signal-Pool des `rocprofiler-sdk`. | Nicht vorsorglich übernehmen. Erst das nackte Image auf Idle-CPU und fehlende Events prüfen. |
+
+### Möglicher verbleibender Root-Cause-Patch
+
+Der vom v0.32-Branch gepinnte `rocprofiler-sdk` reserviert beim ersten
+Pool-Aufbau weiterhin 4096 interruptfähige HSA-Signale. Das entspricht dem
+gesamten KFD-Event-Limit eines Prozesses und passt zu den in diesem Projekt
+gemessenen Werten `checked_out_highwater=4094` und `create_failure=1`.
+[ROCm/rocm-systems #13177](https://github.com/ROCm/rocm-systems/issues/13177)
+lokalisiert diesen Zusammenhang; der noch offene
+[Root-Cause-Patch #13179](https://github.com/ROCm/rocm-systems/pull/13179)
+verkleinert den Pool-Batch von 4096 auf 1024.
+
+Dieser kleine `rocprofiler-sdk`-Patch ist der einzige derzeit erkennbare
+Patchkandidat für v0.32.0. Er wird trotzdem **nicht prophylaktisch** eingebaut.
+Nur wenn das unveränderte Release-Image erneut dauerhafte Idle-CPU-Last zeigt
+und die Event-Erschöpfung bestätigt wird, soll genau dieser Root-Cause-Patch
+isoliert getestet werden. Die beiden alten ROCr-Backoffs sollen dadurch nicht
+in ein v0.32-Image übernommen werden.
 
 ## Regel für die Übernahme der Tunings
 
 Die fünf v0.29.0-Tuning-JSONs sind nur für den festgelegten v0.29.0-Stack ein
-Beleg. Für einen v0.31.x-Kandidaten muss man:
+Performancebeleg. Der
+[v0.32-Config-Loader](https://github.com/vllm-project/vllm/blob/releases/v0.32.0/vllm/model_executor/layers/quantization/utils/fp8_utils.py)
+verwendet weiterhin denselben Pfad, Dateinamen und dasselbe JSON-Schema für
+`fp8_w8a8` mit Blockform `[128,128]`; die Dateien sind daher mechanisch
+kompatibel. Das beweist aber weder, dass der Dispatcher diesen Kernelpfad im
+konkreten Lauf auswählt, noch dass die alten Gewinner unter dem neuen
+PyTorch-/Triton-/vLLM-Stack weiterhin optimal sind.
+
+Der Prüfablauf lautet deshalb: zuerst v0.32 ohne lokale Configs, anschließend
+dasselbe Image mit den fünf alten JSONs und danach eine vollständige
+Neuvermessung. Dabei muss man:
 
 1. feststellen, welches GEMM-Backend die einzelnen Modellformen tatsächlich
    erhält;
@@ -168,8 +204,11 @@ Beleg. Für einen v0.31.x-Kandidaten muss man:
 4. HIP-Graph- und TP2-Stresstests wiederholen;
 5. neue Tuningdateien nur veröffentlichen, wenn sie reproduzierbar gewinnen.
 
-Die alten Dateien lediglich in ein neues Image zu kopieren ist weder ein
-gültiger Benchmark noch eine gültige Migration.
+Die alten Dateien dürfen damit als Kompatibilitäts- und Vergleichskandidaten
+dienen. Sie lediglich in ein neues Image zu kopieren und ungeprüft als
+„v0.32-Tuning“ zu veröffentlichen ist weder ein gültiger Benchmark noch eine
+gültige Migration. Das optionale `ROCM_SEGMENTED_ATTN` besitzt außerdem einen
+eigenen Attention-Autotuning-Cache; dieser ist von den fünf GEMM-JSONs getrennt.
 
 ## Upgrade-Schranke
 

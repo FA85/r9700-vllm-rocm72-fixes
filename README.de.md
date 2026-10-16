@@ -29,7 +29,10 @@
 > RDNA4-Attention-Backend. Die für unseren Crash besonders relevanten Grenzen
 > für Accepted-Token-Indizes und Stale-Row-Fixes sind aber weiterhin offen.
 > v0.32.0 ist deshalb ein Prüfpunkt für isolierte Tests und keine automatische
-> Upgrade-Zusage. Siehe
+> Upgrade-Zusage. Eine vorläufige Quellprüfung deutet darauf hin, dass alle drei
+> bisherigen Patches zunächst entfallen könnten; nur der noch offene
+> `rocprofiler-sdk`-Signal-Pool-Fix bleibt ein bedingter Kandidat, falls das
+> nackte 0.32-Image die KFD-Event-Erschöpfung tatsächlich reproduziert. Siehe
 > [Entscheidung zu v0.30/v0.31 und Beobachtungsliste für v0.32](UPGRADE_WATCH.de.md).
 
 Dieses Repository baut ein inoffizielles Derivat des offiziellen vLLM-ROCm-
