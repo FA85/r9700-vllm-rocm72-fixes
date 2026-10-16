@@ -2,7 +2,8 @@
 
 [Deutsche Fassung](UPGRADE_WATCH.de.md)
 
-Status: 2026-10-12.
+Status: 2026-10-12; updated on 2026-10-16 with the preliminary v0.32 patch and
+tuning plan.
 
 This note records a project decision, not a general recommendation for all
 ROCm users. The reference setup is:
@@ -43,25 +44,12 @@ The reason for waiting is now stronger than simple version conservatism:
   opt-in AITER FlyDSL GDN prefill path. It was validated on MI355X with a much
   larger Qwen3.8 model, not on `gfx1201` with this dense 27B checkpoint.
 
-Two open pull requests remain especially important after the observed
-`hipErrorIllegalAddress` in the ROCm GDN path:
-
-- [vLLM #51508](https://github.com/vllm-project/vllm/pull/51508) describes an
-  async-scheduling stale-row condition where an accepted count of zero becomes
-  index `-1`; depending on allocation layout it can silently corrupt state or
-  cause an illegal memory access.
-- [vLLM #50021](https://github.com/vllm-project/vllm/pull/50021) adds upper and
-  lower bounds to accepted-token-derived GDN/KDA state lookups. It explicitly
-  distinguishes this bounds problem from the still-separate non-`align`
-  async-scheduling ordering race.
-
-Because those two crash-near changes are not merged, a current nightly is
-interesting for laboratory reproduction but is not yet a clean production
-successor. The opt-in native RDNA3/RDNA4 all-reduce
+Other open changes include the opt-in native RDNA3/RDNA4 all-reduce
 ([vLLM #57767](https://github.com/vllm-project/vllm/pull/57767)) and the fix
 that makes the AITER unified-attention switch effective on RDNA
-([vLLM #56040](https://github.com/vllm-project/vllm/pull/56040)) also remain
-open.
+([vLLM #56040](https://github.com/vllm-project/vllm/pull/56040)). Open pull
+requests are not a basis for production approval; the isolated test of a stable
+release image remains decisive.
 
 ## Why this project skips v0.30.0
 
@@ -147,7 +135,7 @@ Only a problem reproduced on this exact setup justifies a new patch.
 | --- | --- | --- |
 | AITER LDS guard | The branch builds [AITER 0.1.24.post1](https://github.com/vllm-project/vllm/blob/releases/v0.32.0/docker/Dockerfile.rocm_base), which contains the broader RDNA LDS guard from [ROCm/aiter #4868](https://github.com/ROCm/aiter/pull/4868). | Omit the local backport initially and validate cold start plus Unified Attention directly on `gfx1201`. |
 | ROCr AsyncEventsLoop backoff | The currently pinned ROCr source does not contain the local 20–200 us backoff. In addition, [ROCm/rocm-systems #13149](https://github.com/ROCm/rocm-systems/pull/13149) removes that backoff again on interrupt-capable native Linux because it adds latency to mixed signal batches. | Do not carry it forward. |
-| ROCr null-event backoff | This backoff treats the polling symptom and has the documented decode trade-off. The now-identified likely root cause is exhaustion of all KFD events by the `rocprofiler-sdk` signal pool. | Do not carry it forward pre-emptively. Test the stock image for idle CPU use and missing events first. |
+| ROCr null-event backoff | This backoff treats the polling symptom and has the documented decode trade-off. One now-identified possible cause is exhaustion of all KFD events by the `rocprofiler-sdk` signal pool. | Do not carry it forward pre-emptively. Test the stock image for idle CPU use and missing events first. |
 
 ### Possible remaining root-cause patch
 
@@ -159,6 +147,15 @@ entire per-process KFD event limit and matches this project's observed
 identifies this relationship; the still-open
 [root-cause patch #13179](https://github.com/ROCm/rocm-systems/pull/13179)
 reduces the pool batch from 4096 to 1024.
+
+**Source readability note:** The upstream value is written as
+`constexpr size_t default_signal_pool_size = (1 << 12);`. Although this
+produces the same machine value as `4096`, it needlessly obscures the meaning
+here: this is a concrete number of reserved signals, not a bit mask or bit
+field. Writing `4096` would expose the domain meaning directly and make its
+notable equality with the KFD event limit easier to spot during review. The
+notation is not evidence of causality by itself, but it makes human review of
+exactly this kind of boundary problem harder.
 
 This small `rocprofiler-sdk` change is the only patch candidate currently
 visible for v0.32.0. It will nevertheless **not be applied proactively**. Only

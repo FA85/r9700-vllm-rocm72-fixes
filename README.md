@@ -26,9 +26,10 @@
 > The latest release published from this repository has run continuously,
 > stably, and without observed faults on the author's system since publication.
 > Current nightlies contain relevant GDN/MTP correctness fixes and an opt-in
-> RDNA4 segmented-attention backend, but the most crash-relevant accepted-token
-> bounds and stale-row fixes are still open. v0.32.0 is therefore a checkpoint
-> for isolated testing, not a promised upgrade. A preliminary source review
+> RDNA4 segmented-attention backend, but their relevance and stability for the
+> exact production setup have not yet been validated in practice. v0.32.0 is
+> therefore a checkpoint for isolated testing, not a promised upgrade.
+> **Update from 2026-10-16:** A preliminary source review
 > suggests that all three existing patches may initially be omitted; only the
 > still-open `rocprofiler-sdk` signal-pool fix remains a conditional candidate
 > if the stock v0.32 image actually reproduces KFD event exhaustion. See the

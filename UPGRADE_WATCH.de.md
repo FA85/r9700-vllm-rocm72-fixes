@@ -2,7 +2,8 @@
 
 [English version](UPGRADE_WATCH.md)
 
-Stand: 12.10.2026.
+Stand: 12.10.2026; am 16.10.2026 um den vorläufigen v0.32-Patch- und
+Tuningplan ergänzt.
 
 Diese Notiz hält eine Projektentscheidung fest und ist keine allgemeine
 Empfehlung für alle ROCm-Nutzer. Das Referenzsystem besteht aus:
@@ -49,26 +50,12 @@ Versionsvorsicht:
   mit einem wesentlich größeren Qwen3.8-Modell, nicht auf `gfx1201` mit diesem
   dichten 27B-Checkpoint.
 
-Nach dem beobachteten `hipErrorIllegalAddress` im ROCm-GDN-Pfad sind zwei noch
-offene Pull Requests besonders wichtig:
-
-- [vLLM #51508](https://github.com/vllm-project/vllm/pull/51508) beschreibt
-  bei Async Scheduling eine Stale-Row-Situation, in der ein Accepted Count von
-  null zum Index `-1` wird. Abhängig vom Speicherlayout kann das den Zustand
-  unbemerkt beschädigen oder einen Illegal Memory Access auslösen.
-- [vLLM #50021](https://github.com/vllm-project/vllm/pull/50021) begrenzt die
-  aus Accepted Tokens abgeleiteten GDN-/KDA-State-Indizes nach unten und oben.
-  Der PR grenzt dieses Bounds-Problem ausdrücklich vom weiterhin separaten
-  Ordering-Race bei Async Scheduling außerhalb des `align`-Modus ab.
-
-Solange diese beiden crashnahen Änderungen nicht zusammengeführt sind, ist ein
-aktuelles Nightly für Reproduktionen im Labor interessant, aber noch kein
-sauberer Produktionsnachfolger. Auch das optionale native RDNA3-/RDNA4-
-All-Reduce ([vLLM #57767](https://github.com/vllm-project/vllm/pull/57767))
-und der Fix, der den AITER-Unified-Attention-Schalter auf RDNA tatsächlich
-wirksam macht
-([vLLM #56040](https://github.com/vllm-project/vllm/pull/56040)), sind noch
-offen.
+Weitere offene Änderungen sind das optionale native RDNA3-/RDNA4-All-Reduce
+([vLLM #57767](https://github.com/vllm-project/vllm/pull/57767)) und der Fix,
+der den AITER-Unified-Attention-Schalter auf RDNA tatsächlich wirksam macht
+([vLLM #56040](https://github.com/vllm-project/vllm/pull/56040)). Offene Pull
+Requests sind keine Grundlage für eine Produktionsfreigabe;
+entscheidend bleibt der isolierte Test eines stabilen Release-Images.
 
 ## Warum dieses Projekt v0.30.0 überspringt
 
@@ -161,7 +148,7 @@ rechtfertigt einen neuen Patch.
 | --- | --- | --- |
 | AITER-LDS-Guard | Der Branch baut [AITER 0.1.24.post1](https://github.com/vllm-project/vllm/blob/releases/v0.32.0/docker/Dockerfile.rocm_base); der allgemeinere RDNA-LDS-Guard aus [ROCm/aiter #4868](https://github.com/ROCm/aiter/pull/4868) ist darin enthalten. | Den lokalen Backport zunächst weglassen und Kaltstart sowie Unified Attention direkt auf `gfx1201` prüfen. |
 | ROCr-AsyncEventsLoop-Backoff | Der aktuell gepinnte ROCr-Quellstand enthält den lokalen 20–200-µs-Backoff nicht. Außerdem entfernt [ROCm/rocm-systems #13149](https://github.com/ROCm/rocm-systems/pull/13149) diesen Backoff auf interruptfähigem nativen Linux wieder, weil er in gemischten Signal-Batches Latenz erzeugt. | Nicht übernehmen. |
-| ROCr-Null-Event-Backoff | Der Backoff behandelt das Polling-Symptom und besitzt den dokumentierten Decode-Zielkonflikt. Die inzwischen lokalisierte wahrscheinliche Ursache ist die Erschöpfung aller KFD-Events durch den Signal-Pool des `rocprofiler-sdk`. | Nicht vorsorglich übernehmen. Erst das nackte Image auf Idle-CPU und fehlende Events prüfen. |
+| ROCr-Null-Event-Backoff | Der Backoff behandelt das Polling-Symptom und besitzt den dokumentierten Decode-Zielkonflikt. Eine inzwischen lokalisierte mögliche Ursache ist die Erschöpfung aller KFD-Events durch den Signal-Pool des `rocprofiler-sdk`. | Nicht vorsorglich übernehmen. Erst das nackte Image auf Idle-CPU und fehlende Events prüfen. |
 
 ### Möglicher verbleibender Root-Cause-Patch
 
@@ -173,6 +160,16 @@ gemessenen Werten `checked_out_highwater=4094` und `create_failure=1`.
 lokalisiert diesen Zusammenhang; der noch offene
 [Root-Cause-Patch #13179](https://github.com/ROCm/rocm-systems/pull/13179)
 verkleinert den Pool-Batch von 4096 auf 1024.
+
+**Quelltext- und Lesbarkeitshinweis:** Der Ausgangswert steht im Upstream-Code
+als `constexpr size_t default_signal_pool_size = (1 << 12);`. Das ergibt zwar
+denselben Maschinenwert wie `4096`, ist an dieser Stelle aber unnötig
+verschleiernd: Es geht um die konkrete Anzahl reservierter Signale, nicht um
+eine Bitmaske oder ein Bitfeld. `4096` würde die fachliche Bedeutung unmittelbar
+zeigen und die auffällige Übereinstimmung mit dem KFD-Event-Limit bei Reviews
+sichtbarer machen. Diese schlechte Schreibweise ist für sich allein kein
+Ursachennachweis, erschwert aber genau die menschliche Prüfung solcher
+Grenzwertfehler.
 
 Dieser kleine `rocprofiler-sdk`-Patch ist der einzige derzeit erkennbare
 Patchkandidat für v0.32.0. Er wird trotzdem **nicht prophylaktisch** eingebaut.
