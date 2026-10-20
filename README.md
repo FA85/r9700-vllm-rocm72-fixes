@@ -37,6 +37,21 @@
 > if the stock v0.32 image actually reproduces KFD event exhaustion. See the
 > [v0.30/v0.31 skip decision and v0.32 watchlist](UPGRADE_WATCH.md).
 
+> **Update from 2026-10-20 — no successor image planned:** The tested stock
+> nightly now contains the upstream RDNA unified-attention LDS guard, including
+> `gfx1201`, so the local AITER 0.1.19 LDS backport is no longer required. On
+> this dual-R9700 setup, starting the otherwise unmodified image with
+> `HSA_TOOLS_DISABLE_REGISTER=1` also avoided the persistent idle-CPU behavior
+> that motivated both local ROCr backoffs. The accompanying throughput and
+> replay checks showed no performance loss attributable to this setting. It
+> disables HSA tool/profiler registration and must therefore be removed for
+> profiling sessions; this is a setup-specific operational workaround, not an
+> upstream runtime fix. Because these two changes make all three local source
+> patches unnecessary for the tested nightly, this repository will **not
+> publish a new patched image release** for that line. The existing v0.29.0
+> release remains available as a historical, version-pinned solution. See the
+> [updated upgrade note](UPGRADE_WATCH.md).
+
 ## Preliminary stock-nightly result (2026-10-16)
 
 The unmodified official image
@@ -86,7 +101,12 @@ targeted changes:
    `gfx1201`.
 2. **ROCr AsyncEventsLoop backoff** — a backport of
    [ROCm/rocm-systems#7898](https://github.com/ROCm/rocm-systems/pull/7898),
-   preventing a signal-polling fallback from occupying one CPU core.
+   merged upstream as
+   [`46558b7`](https://github.com/ROCm/rocm-systems/commit/46558b7af4dc79b8b8014619c1afdb82db079a9f),
+   preventing a signal-polling fallback from occupying one CPU core. The later
+   native-Linux mixed-batch correction is upstream commit
+   [`867d8de`](https://github.com/ROCm/rocm-systems/commit/867d8def53f68bbb892b4fd5605eff727eab6c0f)
+   from [ROCm/rocm-systems#13149](https://github.com/ROCm/rocm-systems/pull/13149).
 3. **ROCr null-event backoff** — a narrowly scoped workaround for a blocked
    `InterruptSignal` without a KFD event. It polls the userspace signal with an
    exponential 20–200 microsecond sleep instead of repeatedly calling
@@ -122,11 +142,17 @@ For the idle-load problem, the independently published
 had already identified the same hot HSA/ROCr location,
 `Runtime::AsyncEventsLoop`. That was an important lead for our profiler and
 debugger work. The AsyncEventsLoop patch itself follows the subsequently
-merged [ROCm Systems PR #7898](https://github.com/ROCm/rocm-systems/pull/7898).
+merged [ROCm Systems PR #7898](https://github.com/ROCm/rocm-systems/pull/7898)
+and its official merge commit
+[`46558b7`](https://github.com/ROCm/rocm-systems/commit/46558b7af4dc79b8b8014619c1afdb82db079a9f).
+The upstream follow-up for interrupt-capable native-Linux mixed batches is
+[`867d8de`](https://github.com/ROCm/rocm-systems/commit/867d8def53f68bbb892b4fd5605eff727eab6c0f).
 Issue #7860 has a different trigger, so it is not evidence that its exact root
 cause was the same as in our vLLM case. The additional null-event path was
 separately traced in our setup to `InterruptSignal::WaitRelaxed` and an invalid
-KFD event handle, and remains a local workaround.
+KFD event handle, and remains a local workaround. There is no corresponding
+upstream ROCm commit for that additional null-event patch; presenting either
+of the two AsyncEventsLoop commits as its source would be inaccurate.
 
 ## Version scope
 

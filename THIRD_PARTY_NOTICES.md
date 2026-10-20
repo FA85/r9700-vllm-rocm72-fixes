@@ -37,7 +37,12 @@ subject to AITER's license.
   <https://github.com/mawong-amd/rocm-systems/commit/c7e40e16bca10311af72aee09cfa0cd1726f70a7>
 - AsyncEventsLoop upstream fix:
   <https://github.com/ROCm/rocm-systems/pull/7898>
-- Upstream fix commit: `46558b7af4dc79b8b8014619c1afdb82db079a9f`
+- Upstream fix commit:
+  <https://github.com/ROCm/rocm-systems/commit/46558b7af4dc79b8b8014619c1afdb82db079a9f>
+- Native-Linux mixed-batch follow-up:
+  <https://github.com/ROCm/rocm-systems/commit/867d8def53f68bbb892b4fd5605eff727eab6c0f>
+- The additional null-event backoff in this repository is local work and has
+  no corresponding upstream ROCm commit.
 - Earlier independent localization of an HSA async-handler busy-spin to
   `Runtime::AsyncEventsLoop` (different trigger, diagnostic lead only):
   <https://github.com/ROCm/rocm-systems/issues/7860>

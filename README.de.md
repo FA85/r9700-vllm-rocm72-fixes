@@ -38,6 +38,23 @@
 > nackte 0.32-Image die KFD-Event-Erschöpfung tatsächlich reproduziert. Siehe
 > [Entscheidung zu v0.30/v0.31 und Beobachtungsliste für v0.32](UPGRADE_WATCH.de.md).
 
+> **Ergänzung vom 20.10.2026 — kein Nachfolgeimage geplant:** Das getestete
+> nackte Nightly enthält inzwischen den offiziellen RDNA-LDS-Guard für Unified
+> Attention einschließlich `gfx1201`; der lokale AITER-0.1.19-Backport ist
+> damit nicht mehr erforderlich. Auf diesem Dual-R9700-System verhinderte
+> außerdem `HSA_TOOLS_DISABLE_REGISTER=1` beim ansonsten unveränderten Image
+> die dauerhafte Leerlauf-CPU-Last, die Anlass für beide lokalen ROCr-Backoffs
+> war. Die begleitenden Durchsatz- und Replay-Prüfungen zeigten keinen diesem
+> Parameter zuzuordnenden Leistungsverlust. Der Parameter deaktiviert die
+> Registrierung von HSA-Tools beziehungsweise Profilern und muss für
+> Profiling-Sitzungen entfernt werden; er ist ein setupspezifischer operativer
+> Workaround und kein Upstream-Runtime-Fix. Da diese beiden Änderungen alle
+> drei lokalen Quellpatches für das getestete Nightly überflüssig machen, wird
+> dieses Repository für diese Linie **kein neues gepatchtes Image
+> veröffentlichen**. Das vorhandene v0.29.0-Release bleibt als historische,
+> versionsgebundene Lösung verfügbar. Siehe die
+> [aktualisierte Upgrade-Notiz](UPGRADE_WATCH.de.md).
+
 ## Vorläufiges Ergebnis des nackten Nightlies (16.10.2026)
 
 Das unveränderte offizielle Image
@@ -86,7 +103,13 @@ gezielte Änderungen:
 1. **AITER-LDS-Guard** — ein minimaler Backport für `amd-aiter 0.1.19`,
    abgeleitet aus [ROCm/aiter#5035](https://github.com/ROCm/aiter/pull/5035).
 2. **ROCr-AsyncEventsLoop-Backoff** — ein Backport aus
-   [ROCm/rocm-systems#7898](https://github.com/ROCm/rocm-systems/pull/7898).
+   [ROCm/rocm-systems#7898](https://github.com/ROCm/rocm-systems/pull/7898),
+   upstream zusammengeführt als
+   [`46558b7`](https://github.com/ROCm/rocm-systems/commit/46558b7af4dc79b8b8014619c1afdb82db079a9f).
+   Die spätere Korrektur für gemischte Signal-Batches unter nativem Linux ist
+   Upstream-Commit
+   [`867d8de`](https://github.com/ROCm/rocm-systems/commit/867d8def53f68bbb892b4fd5605eff727eab6c0f)
+   aus [ROCm/rocm-systems#13149](https://github.com/ROCm/rocm-systems/pull/13149).
 3. **ROCr-Null-Event-Backoff** — ein eng begrenzter Workaround für blockierende
    `InterruptSignal`-Waits ohne KFD-Event. Statt
    `hsaKmtWaitOnEvent_Ext(nullptr, ...)` in einer engen Schleife aufzurufen,
@@ -123,12 +146,20 @@ Beim Leerlaufproblem wies der bereits unabhängig veröffentlichte
 auf dieselbe heiße Stelle in HSA/ROCr hin: `Runtime::AsyncEventsLoop`. Das war
 ein wichtiger Wegweiser für unsere Profiler- und Debuggeranalyse. Der
 AsyncEventsLoop-Patch selbst folgt dem später zusammengeführten
-[ROCm-Systems-PR #7898](https://github.com/ROCm/rocm-systems/pull/7898).
+[ROCm-Systems-PR #7898](https://github.com/ROCm/rocm-systems/pull/7898) und
+dessen offiziellem Merge-Commit
+[`46558b7`](https://github.com/ROCm/rocm-systems/commit/46558b7af4dc79b8b8014619c1afdb82db079a9f).
+Der Upstream-Folgecommit für gemischte Signal-Batches auf interruptfähigem
+nativem Linux ist
+[`867d8de`](https://github.com/ROCm/rocm-systems/commit/867d8def53f68bbb892b4fd5605eff727eab6c0f).
 Issue #7860 beschreibt jedoch einen anderen Auslöser; er belegt deshalb nicht,
 dass dessen konkrete Ursache mit unserem vLLM-Fall identisch war. Der
 zusätzliche Null-Event-Pfad wurde in unserem Setup separat bis
 `InterruptSignal::WaitRelaxed` und einem ungültigen KFD-Event-Handle
-zurückverfolgt und bleibt ein lokaler Workaround.
+zurückverfolgt und bleibt ein lokaler Workaround. Für diesen zusätzlichen
+Null-Event-Patch gibt es keinen entsprechenden Upstream-Commit im offiziellen
+ROCm-Repository; einen der beiden AsyncEventsLoop-Commits als seine Quelle
+auszugeben wäre sachlich falsch.
 
 ## Gültiger Versionsbereich
 

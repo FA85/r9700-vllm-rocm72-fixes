@@ -1,9 +1,9 @@
-# vLLM upgrade watch: skipping v0.30.0/v0.31.0, waiting for v0.32.0
+# vLLM upgrade watch: v0.32.0 and the tested post-v0.31 nightly
 
 [Deutsche Fassung](UPGRADE_WATCH.de.md)
 
 Status: 2026-10-12; updated on 2026-10-16 with the preliminary v0.32 patch and
-tuning plan.
+tuning plan and on 2026-10-20 with the tested patch-retirement decision.
 
 This note records a project decision, not a general recommendation for all
 ROCm users. The reference setup is:
@@ -15,7 +15,33 @@ ROCm users. The reference setup is:
   with two speculative tokens;
 - the three local fixes documented in this repository.
 
-## Current decision: wait for v0.32.0
+## Update 2026-10-20: no new patched image release
+
+The tested stock nightly has moved this project beyond the three local source
+patches:
+
+- its AITER version contains the upstream
+  [RDNA unified-attention LDS guard](https://github.com/ROCm/aiter/pull/4868),
+  including `gfx1201`, replacing the local AITER 0.1.19 backport;
+- setting `HSA_TOOLS_DISABLE_REGISTER=1` on the otherwise unmodified image
+  avoided the persistent idle-CPU behavior that motivated both local ROCr
+  backoffs;
+- the accompanying throughput and historical-request replay checks found no
+  performance loss attributable to that setting on the reference setup.
+
+`HSA_TOOLS_DISABLE_REGISTER=1` disables HSA tool and profiler registration. It
+must be removed when ROCm/HSA profiling is required, and this result must not
+be read as a general ROCr fix or a guarantee for other applications. For this
+repository's normal inference workload, however, the upstream LDS guard plus
+that runtime setting make all three local binary/source patches unnecessary.
+
+Consequently, this repository will **not publish a new patched container image
+for the tested nightly line**. The existing v0.29.0 release remains available
+as a historical, version-pinned solution for the stack it documents. Any
+future image publication would require a new, reproducible problem that again
+needs an actual source change; a higher vLLM version alone is not sufficient.
+
+## Previous decision before the v0.32.0 release
 
 v0.31.0 is now stable, but this project will not move its production image to
 it. The next evaluation point is v0.32.0. This is not a promise to upgrade:
@@ -134,7 +160,7 @@ Only a problem reproduced on this exact setup justifies a new patch.
 | Previous local change | Status in the current v0.32 branch | Planned treatment |
 | --- | --- | --- |
 | AITER LDS guard | The branch builds [AITER 0.1.24.post1](https://github.com/vllm-project/vllm/blob/releases/v0.32.0/docker/Dockerfile.rocm_base), which contains the broader RDNA LDS guard from [ROCm/aiter #4868](https://github.com/ROCm/aiter/pull/4868). | Omit the local backport initially and validate cold start plus Unified Attention directly on `gfx1201`. |
-| ROCr AsyncEventsLoop backoff | The currently pinned ROCr source does not contain the local 20–200 us backoff. In addition, [ROCm/rocm-systems #13149](https://github.com/ROCm/rocm-systems/pull/13149) removes that backoff again on interrupt-capable native Linux because it adds latency to mixed signal batches. | Do not carry it forward. |
+| ROCr AsyncEventsLoop backoff | The earlier upstream implementation is commit [`46558b7`](https://github.com/ROCm/rocm-systems/commit/46558b7af4dc79b8b8014619c1afdb82db079a9f). The currently pinned ROCr source does not contain the local 20–200 us backoff, and official follow-up commit [`867d8de`](https://github.com/ROCm/rocm-systems/commit/867d8def53f68bbb892b4fd5605eff727eab6c0f) from [#13149](https://github.com/ROCm/rocm-systems/pull/13149) removes that backoff again on interrupt-capable native Linux because it adds latency to mixed signal batches. | Do not carry it forward. |
 | ROCr null-event backoff | This backoff treats the polling symptom and has the documented decode trade-off. One now-identified possible cause is exhaustion of all KFD events by the `rocprofiler-sdk` signal pool. | Do not carry it forward pre-emptively. Test the stock image for idle CPU use and missing events first. |
 
 ### Possible remaining root-cause patch

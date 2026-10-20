@@ -1,9 +1,9 @@
-# vLLM-Upgrade-Beobachtung: v0.30.0/v0.31.0 überspringen, auf v0.32.0 warten
+# vLLM-Upgrade-Beobachtung: v0.32.0 und das getestete Nightly nach v0.31
 
 [English version](UPGRADE_WATCH.md)
 
 Stand: 12.10.2026; am 16.10.2026 um den vorläufigen v0.32-Patch- und
-Tuningplan ergänzt.
+Tuningplan und am 20.10.2026 um die getestete Patch-Ablösung ergänzt.
 
 Diese Notiz hält eine Projektentscheidung fest und ist keine allgemeine
 Empfehlung für alle ROCm-Nutzer. Das Referenzsystem besteht aus:
@@ -15,7 +15,36 @@ Empfehlung für alle ROCm-Nutzer. Das Referenzsystem besteht aus:
   mit zwei spekulativen Tokens;
 - den drei in diesem Repository dokumentierten lokalen Fixes.
 
-## Aktuelle Entscheidung: auf v0.32.0 warten
+## Ergänzung vom 20.10.2026: kein neues gepatchtes Image
+
+Mit dem getesteten nackten Nightly ist dieses Projekt über die drei lokalen
+Quellpatches hinausgekommen:
+
+- Seine AITER-Version enthält den offiziellen
+  [RDNA-LDS-Guard für Unified Attention](https://github.com/ROCm/aiter/pull/4868)
+  einschließlich `gfx1201` und ersetzt damit den lokalen AITER-0.1.19-Backport.
+- `HSA_TOOLS_DISABLE_REGISTER=1` verhinderte beim ansonsten unveränderten
+  Image die dauerhafte Leerlauf-CPU-Last, die Anlass für beide lokalen
+  ROCr-Backoffs war.
+- Die begleitenden Durchsatzmessungen und Replays historischer Requests
+  zeigten auf dem Referenzsystem keinen diesem Parameter zuzuordnenden
+  Leistungsverlust.
+
+`HSA_TOOLS_DISABLE_REGISTER=1` deaktiviert die Registrierung von HSA-Tools und
+Profilern. Für ROCm-/HSA-Profiling muss der Parameter entfernt werden; das
+Ergebnis ist weder ein allgemeiner ROCr-Fix noch eine Garantie für andere
+Anwendungen. Für den normalen Inferenzbetrieb dieses Repositorys machen der
+Upstream-LDS-Guard und dieser Runtime-Parameter jedoch alle drei lokalen
+Binär- beziehungsweise Quellpatches überflüssig.
+
+Folglich wird dieses Repository für die getestete Nightly-Linie **kein neues
+gepatchtes Containerimage veröffentlichen**. Das vorhandene v0.29.0-Release
+bleibt als historische, versionsgebundene Lösung für den dort dokumentierten
+Stack verfügbar. Eine spätere Image-Veröffentlichung würde ein neues,
+reproduzierbares Problem voraussetzen, das tatsächlich wieder eine
+Quelländerung benötigt; eine höhere vLLM-Versionsnummer allein genügt nicht.
+
+## Frühere Entscheidung vor Veröffentlichung von v0.32.0
 
 v0.31.0 ist inzwischen stabil veröffentlicht. Dieses Projekt stellt sein
 Produktivimage trotzdem nicht darauf um. Der nächste Prüfpunkt ist v0.32.0.
@@ -147,7 +176,7 @@ rechtfertigt einen neuen Patch.
 | Bisherige lokale Änderung | Stand im aktuellen v0.32-Branch | Geplantes Vorgehen |
 | --- | --- | --- |
 | AITER-LDS-Guard | Der Branch baut [AITER 0.1.24.post1](https://github.com/vllm-project/vllm/blob/releases/v0.32.0/docker/Dockerfile.rocm_base); der allgemeinere RDNA-LDS-Guard aus [ROCm/aiter #4868](https://github.com/ROCm/aiter/pull/4868) ist darin enthalten. | Den lokalen Backport zunächst weglassen und Kaltstart sowie Unified Attention direkt auf `gfx1201` prüfen. |
-| ROCr-AsyncEventsLoop-Backoff | Der aktuell gepinnte ROCr-Quellstand enthält den lokalen 20–200-µs-Backoff nicht. Außerdem entfernt [ROCm/rocm-systems #13149](https://github.com/ROCm/rocm-systems/pull/13149) diesen Backoff auf interruptfähigem nativen Linux wieder, weil er in gemischten Signal-Batches Latenz erzeugt. | Nicht übernehmen. |
+| ROCr-AsyncEventsLoop-Backoff | Die frühere Upstream-Implementierung ist Commit [`46558b7`](https://github.com/ROCm/rocm-systems/commit/46558b7af4dc79b8b8014619c1afdb82db079a9f). Der aktuell gepinnte ROCr-Quellstand enthält den lokalen 20–200-µs-Backoff nicht; der offizielle Folgecommit [`867d8de`](https://github.com/ROCm/rocm-systems/commit/867d8def53f68bbb892b4fd5605eff727eab6c0f) aus [#13149](https://github.com/ROCm/rocm-systems/pull/13149) entfernt diesen Backoff auf interruptfähigem nativem Linux wieder, weil er in gemischten Signal-Batches Latenz erzeugt. | Nicht übernehmen. |
 | ROCr-Null-Event-Backoff | Der Backoff behandelt das Polling-Symptom und besitzt den dokumentierten Decode-Zielkonflikt. Eine inzwischen lokalisierte mögliche Ursache ist die Erschöpfung aller KFD-Events durch den Signal-Pool des `rocprofiler-sdk`. | Nicht vorsorglich übernehmen. Erst das nackte Image auf Idle-CPU und fehlende Events prüfen. |
 
 ### Möglicher verbleibender Root-Cause-Patch
